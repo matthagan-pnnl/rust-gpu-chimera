@@ -44,13 +44,6 @@ impl ThreadId {
     }
 }
 
-/// Push constants shared between CPU and GPU
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct PushConstants {
-    pub num_elements: u32,
-}
-
 // Bitonic sort implementation
 // A comparison-based sorting algorithm well-suited for parallel execution on GPUs
 
@@ -246,6 +239,26 @@ impl SortableKey for f32 {
     }
 }
 
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
+#[repr(C)]
+pub struct MajoranaParams {
+    pub num_terms: u32,
+    pub num_majorana_modes: u32,
+    pub cos_angle: f32,
+    pub sin_angle: f32,
+    pub rotation_op: [u32; 10],
+    pub coefficient_cutoff: f32,
+    pub unpaired_cutoff: u32,
+}
+
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
+#[repr(C)]
+pub struct CommutationParams {
+    pub num_terms: u32,
+    pub num_fermion_modes: u32,
+    pub other_op: [u32; 10],
+}
+
 /// Parameters for GPU bitonic sorting
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
 #[repr(C)]
@@ -278,4 +291,3 @@ impl CompareDirection {
         matches!(self, CompareDirection::Up)
     }
 }
-

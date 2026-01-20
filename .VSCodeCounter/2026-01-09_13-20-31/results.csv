@@ -1,0 +1,27 @@
+"filename", "language", "Rust", "TOML", "Shell Script", "Typst", "Markdown", "YAML", "comment", "blank", "total"
+"/Users/matthew.hagan/repos/rust-gpu-chimera/.cargo/config.toml", "TOML", 0, 3, 0, 0, 0, 0, 0, 1, 4
+"/Users/matthew.hagan/repos/rust-gpu-chimera/.github/workflows/cpu.yml", "YAML", 0, 0, 0, 0, 0, 48, 0, 18, 66
+"/Users/matthew.hagan/repos/rust-gpu-chimera/.github/workflows/cuda.yml", "YAML", 0, 0, 0, 0, 0, 18, 0, 5, 23
+"/Users/matthew.hagan/repos/rust-gpu-chimera/.github/workflows/native-gpu.yml", "YAML", 0, 0, 0, 0, 0, 79, 0, 27, 106
+"/Users/matthew.hagan/repos/rust-gpu-chimera/Cargo.lock", "TOML", 0, 3358, 0, 0, 0, 0, 2, 392, 3752
+"/Users/matthew.hagan/repos/rust-gpu-chimera/Cargo.toml", "TOML", 0, 42, 0, 0, 0, 0, 5, 12, 59
+"/Users/matthew.hagan/repos/rust-gpu-chimera/README.md", "Markdown", 0, 0, 0, 0, 116, 0, 0, 28, 144
+"/Users/matthew.hagan/repos/rust-gpu-chimera/build.rs", "Rust", 49, 0, 0, 0, 0, 0, 10, 16, 75
+"/Users/matthew.hagan/repos/rust-gpu-chimera/deploy-cuda.sh", "Shell Script", 0, 0, 116, 0, 0, 0, 22, 30, 168
+"/Users/matthew.hagan/repos/rust-gpu-chimera/kernel/Cargo.toml", "TOML", 0, 17, 0, 0, 0, 0, 0, 8, 25
+"/Users/matthew.hagan/repos/rust-gpu-chimera/kernel/src/lib.rs", "Rust", 161, 0, 0, 0, 0, 0, 23, 33, 217
+"/Users/matthew.hagan/repos/rust-gpu-chimera/notes.typ", "Typst", 0, 0, 0, 3, 0, 0, 0, 1, 4
+"/Users/matthew.hagan/repos/rust-gpu-chimera/rust-toolchain.toml", "TOML", 0, 3, 0, 0, 0, 0, 0, 0, 3
+"/Users/matthew.hagan/repos/rust-gpu-chimera/shared/Cargo.toml", "TOML", 0, 14, 0, 0, 0, 0, 0, 5, 19
+"/Users/matthew.hagan/repos/rust-gpu-chimera/shared/src/lib.rs", "Rust", 215, 0, 0, 0, 0, 0, 25, 51, 291
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/error.rs", "Rust", 44, 0, 0, 0, 0, 0, 3, 17, 64
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/lib.rs", "Rust", 169, 0, 0, 0, 0, 0, 44, 36, 249
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/main.rs", "Rust", 236, 0, 0, 0, 0, 0, 14, 36, 286
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/ash.rs", "Rust", 431, 0, 0, 0, 0, 0, 39, 72, 542
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/cpu.rs", "Rust", 83, 0, 0, 0, 0, 0, 4, 19, 106
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/cuda.rs", "Rust", 113, 0, 0, 0, 0, 0, 14, 30, 157
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/mod.rs", "Rust", 16, 0, 0, 0, 0, 0, 4, 11, 31
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/wgpu.rs", "Rust", 0, 0, 0, 0, 0, 0, 318, 55, 373
+"/Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/wgpu_majorana.rs", "Rust", 323, 0, 0, 0, 0, 0, 34, 63, 420
+"/Users/matthew.hagan/repos/rust-gpu-chimera/test-all.sh", "Shell Script", 0, 0, 219, 0, 0, 0, 34, 38, 291
+"Total", "-", 1840, 3437, 335, 3, 116, 145, 595, 1004, 7475

@@ -8,6 +8,9 @@ pub mod cuda;
 #[cfg(feature = "wgpu")]
 pub mod wgpu;
 
+#[cfg(feature = "wgpu")]
+pub mod wgpu_majorana;
+
 #[cfg(feature = "ash")]
 pub mod ash;
 
@@ -17,8 +20,11 @@ pub use cpu::CpuRunner;
 #[cfg(feature = "cuda")]
 pub use cuda::CudaRunner;
 
+// #[cfg(feature = "wgpu")]
+// pub use self::wgpu::WgpuRunner;
+
 #[cfg(feature = "wgpu")]
-pub use self::wgpu::WgpuRunner;
+pub use self::wgpu_majorana::WgpuRunnerMajorana;
 
 #[cfg(feature = "ash")]
 pub use self::ash::AshRunner;

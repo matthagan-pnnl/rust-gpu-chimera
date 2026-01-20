@@ -2,19 +2,22 @@
 //!
 //! This demonstrates the same Rust code running on CUDA, Vulkan (SPIR-V), Metal, HLSL,
 //! and CPU.
+//!
 
 #![cfg_attr(target_arch = "spirv", no_std)]
 #![cfg_attr(target_os = "cuda", no_std)]
 
 #[cfg(any(target_arch = "spirv", target_os = "cuda"))]
-use shared::BitonicParams;
+use shared::{BitonicParams, MajoranaParams};
 use shared::{Pass, SortOrder, Stage, ThreadId};
 
 #[cfg(target_arch = "spirv")]
-use spirv_std::{glam::UVec3, spirv};
+use spirv_std::{glam::UVec3, num_traits::Float, spirv};
 
 #[cfg(target_os = "cuda")]
 use cuda_std::{kernel, thread};
+
+const EVEN_BITS_MASK: u32 = 0x55555555;
 
 /// Newtype wrapper for comparison distance
 #[derive(Copy, Clone, Debug)]
@@ -103,6 +106,112 @@ where
         data[i] = val_j;
         data[j] = val_i;
     }
+}
+
+#[inline]
+pub fn majorana_rotate_step(
+    thread_id: ThreadId,
+    data: &mut [u32],
+    num_terms: u32,
+    num_chunks_per_term: u32,
+    rotation_op: [u32; 10],
+    coefficient_cutoff: f32,
+    unpaired_cutoff: u32,
+    cos_angle: f32,
+    sin_angle: f32,
+) {
+    // Early exit for out-of-bounds threads
+    if thread_id.as_u32() >= num_terms {
+        return;
+    }
+    let start_ix = thread_id.as_usize() * 2 * (num_chunks_per_term as usize + 2);
+    let old_op_start_ix = start_ix + 2;
+    let mut coeff = (
+        f32::from_bits(data[start_ix]),
+        f32::from_bits(data[start_ix + 1]),
+    );
+
+    if (coeff.0 * coeff.0 + coeff.1 * coeff.1).sqrt() < coefficient_cutoff {
+        for ix in start_ix..start_ix + 2 + num_chunks_per_term as usize {
+            data[ix] = 0;
+        }
+        return;
+    }
+    let mut num_unpaired = 0;
+    for ix in start_ix + 2..start_ix + 2 + num_chunks_per_term as usize {
+        num_unpaired += (((data[ix] >> 1) ^ data[ix]) & EVEN_BITS_MASK).count_ones();
+    }
+    if num_unpaired > unpaired_cutoff {
+        for ix in start_ix..start_ix + 2 + num_chunks_per_term as usize {
+            data[ix] = 0;
+        }
+        return;
+    }
+    let mut weight_1 = 0;
+    let mut weight_2 = 0;
+    let mut weight_of_product = 0;
+    for ix in 0..num_chunks_per_term as usize {
+        weight_of_product += (data[old_op_start_ix + ix] & rotation_op[ix]).count_ones();
+        weight_1 += data[old_op_start_ix + ix].count_ones();
+        weight_2 += rotation_op[ix].count_ones();
+    }
+    if (weight_1 * weight_2 + weight_of_product) % 2 == 0 {
+        data[start_ix + 6] = 77;
+        data[start_ix + 7] = 77;
+        return;
+    }
+    let mut new_coeff = (coeff.0 * sin_angle, coeff.1 * sin_angle);
+    coeff.0 *= cos_angle;
+    coeff.1 *= cos_angle;
+    data[start_ix] = coeff.0.to_bits();
+    data[start_ix + 1] = coeff.1.to_bits();
+
+    let new_op_start_ix = start_ix + 4 + num_chunks_per_term as usize;
+    let new_coeff_ix = start_ix + 2 + num_chunks_per_term as usize;
+    let mut new_op_weight = 0;
+    for ix in 0..num_chunks_per_term as usize {
+        let t = data[old_op_start_ix + ix] ^ rotation_op[ix];
+        new_op_weight += t.count_ones();
+        data[new_op_start_ix + ix] = t;
+    }
+    // We know weight_2 is greater than 0 because otherwise it would commute with the operator
+    // we are rotating. If the rotation operator has a phase then we need to multiply the new coeff by it.
+    if (weight_2 * (weight_2 - 1) / 2) % 2 == 1 {
+        new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
+    }
+    if new_op_weight > 0 {
+        if (new_op_weight * (new_op_weight - 1) / 2) % 2 == 1 {
+            new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
+        }
+    }
+
+    data[new_coeff_ix] = new_coeff.0.to_bits();
+    data[new_coeff_ix + 1] = new_coeff.1.to_bits();
+    data[start_ix + 6] = data[start_ix + 2];
+    data[start_ix + 7] = data[start_ix + 3];
+}
+
+/// GPU entry point for Vulkan/SPIR-V
+#[cfg(target_arch = "spirv")]
+#[spirv(compute(threads(256)))]
+pub fn majorana_kernel(
+    #[spirv(global_invocation_id)] gid: UVec3,
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] data: &mut [u32],
+    #[spirv(push_constant)] params: &MajoranaParams,
+) {
+    let thread_id = ThreadId::new(gid.x);
+
+    majorana_rotate_step(
+        thread_id,
+        data,
+        params.num_terms,
+        params.num_majorana_modes,
+        params.rotation_op,
+        params.coefficient_cutoff,
+        params.unpaired_cutoff,
+        params.cos_angle,
+        params.sin_angle,
+    );
 }
 
 /// Common bitonic sort logic that works on both CUDA and Vulkan

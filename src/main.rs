@@ -112,15 +112,15 @@ where
             }
         }
 
-        #[cfg(feature = "wgpu")]
-        if !gpu_executed {
-            if let Ok(runner) = futures::executor::block_on(WgpuRunner::new()) {
-                run_sort_test(&runner, data, test_type, order)?;
-                gpu_executed = true;
-            } else if let Err(e) = futures::executor::block_on(WgpuRunner::new()) {
-                eprintln!("  wgpu initialization failed: {e}");
-            }
-        }
+        // #[cfg(feature = "wgpu")]
+        // if !gpu_executed {
+        //     if let Ok(runner) = futures::executor::block_on(WgpuRunner::new()) {
+        //         run_sort_test(&runner, data, test_type, order)?;
+        //         gpu_executed = true;
+        //     } else if let Err(e) = futures::executor::block_on(WgpuRunner::new()) {
+        //         eprintln!("  wgpu initialization failed: {e}");
+        //     }
+        // }
 
         #[cfg(feature = "ash")]
         if !gpu_executed {
@@ -142,6 +142,102 @@ where
 }
 
 fn main() -> Result<()> {
+    print_header();
+
+    let num_chunks_per_term = 2;
+    let num_terms = 12;
+    let rotation_angle = 0.12_f32;
+    let rotation_op: Vec<u32> = vec![0b011, 0];
+    let coefficient_cutoff = 1e-5_f32;
+    let unpaired_cutoff = 6_u32;
+
+    let mut data: Vec<u32> = Vec::with_capacity(num_chunks_per_term * num_terms);
+    for term_ix in 0..num_terms {
+        if term_ix % 3 == 0 {
+            data.push(1.0_f32.to_bits());
+            data.push(0.0_f32.to_bits());
+            data.push(0b011);
+            data.push(0);
+            data.append(&mut vec![0; 4]);
+        } else if term_ix % 3 == 1 {
+            data.push(1.2_f32.to_bits());
+            data.push(0.0_f32.to_bits());
+            data.push(0b001);
+            data.push(0);
+            data.append(&mut vec![0; 4]);
+        } else {
+            data.push(1e-10_f32.to_bits());
+            data.push(0.0_f32.to_bits());
+            data.push(0b001);
+            data.push(0);
+            data.append(&mut vec![0; 4]);
+        }
+    }
+    let before = data.clone();
+    // println!("BEFORE.");
+    // let mut count = 0;
+    // for ix in 0..data.len() {
+    //     if count == 0 {
+    //         println!("re: {:}", f32::from_bits(data[ix]));
+    //     } else if count == 1 {
+    //         println!("im: {:}", f32::from_bits(data[ix]));
+    //     } else {
+    //         println!("data[{ix}] = {:}", data[ix]);
+    //     }
+    //     count += 1;
+    //     count %= 2 + num_chunks_per_term;
+    // }
+    // println!("BEFORE.");
+
+    #[cfg(feature = "wgpu")]
+    {
+        if let Ok(runner) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
+            // Get and log backend info
+            let (host, backend, adapter, driver) = runner.backend_info();
+            log_backend_info(host, backend, adapter.as_deref(), driver.as_deref());
+
+            let len = data.len();
+
+            runner.rotate(
+                &mut data[..],
+                rotation_angle,
+                rotation_op,
+                num_terms,
+                num_chunks_per_term,
+                coefficient_cutoff,
+                unpaired_cutoff,
+            )?;
+        } else if let Err(e) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
+            eprintln!("  wgpu initialization failed: {e}");
+        }
+    }
+
+    for ix in 0..num_terms {
+        println!("{:}", "-".repeat(99));
+        let start_ix = ix * (2 + num_chunks_per_term);
+        let before_coeff = (
+            f32::from_bits(before[start_ix]),
+            f32::from_bits(before[start_ix + 1]),
+        );
+        let after_coeff = (
+            f32::from_bits(data[start_ix]),
+            f32::from_bits(data[start_ix + 1]),
+        );
+        println!(
+            "coeff: {:} + i {:} ===> {:} + i{:}",
+            before_coeff.0, before_coeff.1, after_coeff.0, after_coeff.1
+        );
+        println!(
+            "string: {:?} ===> {:?}",
+            &before[start_ix + 2..start_ix + 2 + num_chunks_per_term],
+            &data[start_ix + 2..start_ix + 2 + num_chunks_per_term]
+        );
+    }
+    println!("AFTER.");
+    Ok(())
+}
+
+fn main_old() -> Result<()> {
     print_header();
 
     print_test_header("Demo 1: Sorting 1000 u32 elements");

@@ -19,7 +19,9 @@ pub mod error;
 pub mod runners;
 
 use error::Result;
-use shared::{BitonicParams, Pass, SortOrder, SortableKey, Stage};
+use shared::{
+    BitonicParams, CommutationParams, MajoranaParams, Pass, SortOrder, SortableKey, Stage,
+};
 
 /// Common trait for all sorting backends
 pub trait SortRunner {
@@ -109,6 +111,104 @@ pub trait SortRunner {
     }
 }
 
+pub trait MajoranaRunner {
+    /// Get backend information for logging
+    ///
+    /// Returns a tuple of (host, backend, adapter, driver)
+    fn backend_info(
+        &self,
+    ) -> (
+        &'static str,
+        Option<&'static str>,
+        Option<String>,
+        Option<String>,
+    );
+
+    /// Execute a single kernel pass - platform-specific implementation required
+    ///
+    /// # Arguments
+    /// * `data` - The data slice to sort in-place
+    /// * `params` - Majorana sort parameters for this pass
+    fn execute_kernel_pass(&self, data: &mut [u32], params: MajoranaParams) -> Result<()>;
+
+    /// Prepare data
+    fn prepare_data(&self, data: &[u32]) -> (Vec<u32>, usize) {
+        (data.to_vec(), data.len())
+    }
+
+    /// Run majorana shit
+    fn run_majorana(
+        &self,
+        data: &mut [u32],
+        rotation_angle: f32,
+        rotation_op: Vec<u32>,
+        num_terms: usize,
+        num_chunks_per_term: usize,
+        coefficient_cutoff: f32,
+        unpaired_cutoff: u32,
+    ) -> Result<()> {
+        if rotation_op.len() > 10 {
+            panic!("Only 320 majorana modes supported currently.")
+        }
+        let mut op = [0_u32; 10];
+        if rotation_op.len() > 10 {
+            panic!("Currently only rotation by 160 Fermionic modes is supported.")
+        }
+        for ix in 0..rotation_op.len() {
+            op[ix] = rotation_op[ix];
+        }
+        let params = MajoranaParams {
+            num_terms: num_terms as u32,
+            num_majorana_modes: num_chunks_per_term as u32,
+            cos_angle: (rotation_angle * 2.0).cos(),
+            sin_angle: (rotation_angle * 2.0).sin(),
+            rotation_op: op,
+            coefficient_cutoff,
+            unpaired_cutoff,
+        };
+        self.execute_kernel_pass(data, params)?;
+        Ok(())
+    }
+
+    /// Convert rotated majorana strings back to rust types?
+    fn finalize_data(&self, gpu_data: &[u32], output: &mut [u32]) {
+        for (i, &val) in gpu_data.iter().take(output.len()).enumerate() {
+            output[i] = val;
+        }
+    }
+
+    fn rotate(
+        &self,
+        data: &mut [u32],
+        rotation_angle: f32,
+        rotation_op: Vec<u32>,
+        num_terms: usize,
+        num_chunks_per_term: usize,
+        coefficient_cutoff: f32,
+        unpaired_cutoff: u32,
+    ) -> Result<()> {
+        if data.len() <= 1 {
+            return Ok(());
+        }
+
+        let (mut gpu_data, original_size) = self.prepare_data(data);
+        // self.pad_data(data, original_size);
+        self.run_majorana(
+            &mut gpu_data,
+            rotation_angle,
+            rotation_op,
+            num_terms,
+            num_chunks_per_term,
+            coefficient_cutoff,
+            unpaired_cutoff,
+        )?;
+        gpu_data.truncate(original_size);
+        self.finalize_data(&gpu_data, data);
+
+        Ok(())
+    }
+}
+
 // Re-export runners for convenience
 pub use runners::CpuRunner;
 
@@ -116,14 +216,19 @@ pub use runners::CpuRunner;
 pub use runners::CudaRunner;
 
 #[cfg(feature = "wgpu")]
-pub use runners::WgpuRunner;
+pub use runners::WgpuRunnerMajorana;
+// pub use runners::WgpuRunner;
 
 #[cfg(feature = "ash")]
 pub use runners::AshRunner;
 
 /// Compiled SPIR-V bytecode for the bitonic sort kernel
-#[cfg(any(feature = "wgpu", feature = "ash"))]
-pub const BITONIC_SPIRV: &[u8] = include_bytes!(env!("BITONIC_KERNEL_SPV_PATH"));
+// #[cfg(any(feature = "wgpu", feature = "ash"))]
+// pub const BITONIC_SPIRV: &[u8] = include_bytes!(env!("MAJORANA_KERNEL_SPV_PATH"));
+
+/// Compiled SPIR-V bytecode for the majorana kernel
+#[cfg(any(feature = "wgpu"))]
+pub const MAJORANA_SPIRV: &[u8] = include_bytes!(env!("MAJORANA_KERNEL_SPV_PATH"));
 
 /// Compiled PTX code for the bitonic sort kernel
 #[cfg(feature = "cuda")]

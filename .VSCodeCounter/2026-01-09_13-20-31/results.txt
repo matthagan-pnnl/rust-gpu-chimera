@@ -1,0 +1,67 @@
+Date : 2026-01-09 13:20:31
+Directory : /Users/matthew.hagan/repos/rust-gpu-chimera
+Total : 25 files,  5876 codes, 595 comments, 1004 blanks, all 7475 lines
+
+Languages
++--------------+------------+------------+------------+------------+------------+
+| language     | files      | code       | comment    | blank      | total      |
++--------------+------------+------------+------------+------------+------------+
+| TOML         |          6 |      3,437 |          7 |        418 |      3,862 |
+| Rust         |         12 |      1,840 |        532 |        439 |      2,811 |
+| Shell Script |          2 |        335 |         56 |         68 |        459 |
+| YAML         |          3 |        145 |          0 |         50 |        195 |
+| Markdown     |          1 |        116 |          0 |         28 |        144 |
+| Typst        |          1 |          3 |          0 |          1 |          4 |
++--------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                         | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                            |         25 |      5,876 |        595 |      1,004 |      7,475 |
+| . (Files)                                                                    |          8 |      3,906 |         73 |        517 |      4,496 |
+| .cargo                                                                       |          1 |          3 |          0 |          1 |          4 |
+| .github                                                                      |          3 |        145 |          0 |         50 |        195 |
+| .github/workflows                                                            |          3 |        145 |          0 |         50 |        195 |
+| kernel                                                                       |          2 |        178 |         23 |         41 |        242 |
+| kernel (Files)                                                               |          1 |         17 |          0 |          8 |         25 |
+| kernel/src                                                                   |          1 |        161 |         23 |         33 |        217 |
+| shared                                                                       |          2 |        229 |         25 |         56 |        310 |
+| shared (Files)                                                               |          1 |         14 |          0 |          5 |         19 |
+| shared/src                                                                   |          1 |        215 |         25 |         51 |        291 |
+| src                                                                          |          9 |      1,415 |        474 |        339 |      2,228 |
+| src (Files)                                                                  |          3 |        449 |         61 |         89 |        599 |
+| src/runners                                                                  |          6 |        966 |        413 |        250 |      1,629 |
++------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------+--------------+------------+------------+------------+------------+
+| filename                                                                     | language     | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------+--------------+------------+------------+------------+------------+
+| /Users/matthew.hagan/repos/rust-gpu-chimera/.cargo/config.toml               | TOML         |          3 |          0 |          1 |          4 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/.github/workflows/cpu.yml        | YAML         |         48 |          0 |         18 |         66 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/.github/workflows/cuda.yml       | YAML         |         18 |          0 |          5 |         23 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/.github/workflows/native-gpu.yml | YAML         |         79 |          0 |         27 |        106 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/Cargo.lock                       | TOML         |      3,358 |          2 |        392 |      3,752 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/Cargo.toml                       | TOML         |         42 |          5 |         12 |         59 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/README.md                        | Markdown     |        116 |          0 |         28 |        144 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/build.rs                         | Rust         |         49 |         10 |         16 |         75 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/deploy-cuda.sh                   | Shell Script |        116 |         22 |         30 |        168 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/kernel/Cargo.toml                | TOML         |         17 |          0 |          8 |         25 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/kernel/src/lib.rs                | Rust         |        161 |         23 |         33 |        217 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/notes.typ                        | Typst        |          3 |          0 |          1 |          4 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/rust-toolchain.toml              | TOML         |          3 |          0 |          0 |          3 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/shared/Cargo.toml                | TOML         |         14 |          0 |          5 |         19 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/shared/src/lib.rs                | Rust         |        215 |         25 |         51 |        291 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/error.rs                     | Rust         |         44 |          3 |         17 |         64 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/lib.rs                       | Rust         |        169 |         44 |         36 |        249 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/main.rs                      | Rust         |        236 |         14 |         36 |        286 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/ash.rs               | Rust         |        431 |         39 |         72 |        542 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/cpu.rs               | Rust         |         83 |          4 |         19 |        106 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/cuda.rs              | Rust         |        113 |         14 |         30 |        157 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/mod.rs               | Rust         |         16 |          4 |         11 |         31 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/wgpu.rs              | Rust         |          0 |        318 |         55 |        373 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/src/runners/wgpu_majorana.rs     | Rust         |        323 |         34 |         63 |        420 |
+| /Users/matthew.hagan/repos/rust-gpu-chimera/test-all.sh                      | Shell Script |        219 |         34 |         38 |        291 |
+| Total                                                                        |              |      5,876 |        595 |      1,004 |      7,475 |
++------------------------------------------------------------------------------+--------------+------------+------------+------------+------------+
