@@ -160,7 +160,9 @@ pub fn majorana_rotate_step(
         data[start_ix + 7] = 77;
         return;
     }
-    let mut new_coeff = (coeff.0 * sin_angle, coeff.1 * sin_angle);
+
+    // Including the i sin(theta)
+    let mut new_coeff = (-1.0 * coeff.1 * sin_angle, coeff.0 * sin_angle);
     coeff.0 *= cos_angle;
     coeff.1 *= cos_angle;
     data[start_ix] = coeff.0.to_bits();
@@ -174,21 +176,46 @@ pub fn majorana_rotate_step(
         new_op_weight += t.count_ones();
         data[new_op_start_ix + ix] = t;
     }
-    // We know weight_2 is greater than 0 because otherwise it would commute with the operator
-    // we are rotating. If the rotation operator has a phase then we need to multiply the new coeff by it.
+
+    // TODO: Should probably just track the phase of each term in the coefficient, as it stands is not
+    // a great idea. Now we are implicitly tracking the phase, or assuming that the phase is fine.
+
+    // We know the weights are greater than 0 because otherwise the operators would commute
+    // If the operator has a phase then we need to multiply the new coeff by it.
+    if (weight_1 * (weight_1 - 1) / 2) % 2 == 1 {
+        new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
+    }
+
     if (weight_2 * (weight_2 - 1) / 2) % 2 == 1 {
         new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
     }
+
     if new_op_weight > 0 {
         if (new_op_weight * (new_op_weight - 1) / 2) % 2 == 1 {
             new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
         }
     }
 
+    // I think these are backwards
+    let mut cross_phase_tot = 0;
+    let mut prev_chunk_sum = 0;
+    for chunk_ix in 0..num_chunks_per_term as usize {
+        let mut chunk_1 = data[old_op_start_ix + chunk_ix];
+        while chunk_1 > 0 {
+            let lz = chunk_1.trailing_zeros();
+            let filter = if lz == 0 { 0 } else { u32::MAX >> 32 - lz };
+            let t = (filter & rotation_op[chunk_ix]).count_ones();
+            cross_phase_tot += prev_chunk_sum + t;
+            chunk_1 ^= 1 << lz;
+        }
+        prev_chunk_sum += rotation_op[chunk_ix].count_ones();
+    }
+    if cross_phase_tot % 2 == 1 {
+        new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
+    }
+
     data[new_coeff_ix] = new_coeff.0.to_bits();
     data[new_coeff_ix + 1] = new_coeff.1.to_bits();
-    data[start_ix + 6] = data[start_ix + 2];
-    data[start_ix + 7] = data[start_ix + 3];
 }
 
 /// GPU entry point for Vulkan/SPIR-V
