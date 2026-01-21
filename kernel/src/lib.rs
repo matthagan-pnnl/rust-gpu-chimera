@@ -156,8 +156,6 @@ pub fn majorana_rotate_step(
         weight_2 += rotation_op[ix].count_ones();
     }
     if (weight_1 * weight_2 + weight_of_product) % 2 == 0 {
-        data[start_ix + 6] = 77;
-        data[start_ix + 7] = 77;
         return;
     }
 
@@ -200,16 +198,17 @@ pub fn majorana_rotate_step(
     let mut cross_phase_tot = 0;
     let mut prev_chunk_sum = 0;
     for chunk_ix in 0..num_chunks_per_term as usize {
-        let mut chunk_1 = data[old_op_start_ix + chunk_ix];
+        let mut chunk_1 = rotation_op[old_op_start_ix + chunk_ix];
         while chunk_1 > 0 {
             let lz = chunk_1.trailing_zeros();
-            let filter = if lz == 0 { 0 } else { u32::MAX >> 32 - lz };
-            let t = (filter & rotation_op[chunk_ix]).count_ones();
+            let filter = (1 << lz) - 1;
+            let t = (filter & data[old_op_start_ix + chunk_ix]).count_ones();
             cross_phase_tot += prev_chunk_sum + t;
             chunk_1 ^= 1 << lz;
         }
         prev_chunk_sum += rotation_op[chunk_ix].count_ones();
     }
+
     if cross_phase_tot % 2 == 1 {
         new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
     }

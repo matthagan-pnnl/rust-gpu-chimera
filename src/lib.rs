@@ -157,6 +157,7 @@ pub trait MajoranaRunner {
         for ix in 0..rotation_op.len() {
             op[ix] = rotation_op[ix];
         }
+        println!("sin: {:}", (rotation_angle * 2.0).sin());
         let params = MajoranaParams {
             num_terms: num_terms as u32,
             num_majorana_modes: num_chunks_per_term as u32,
