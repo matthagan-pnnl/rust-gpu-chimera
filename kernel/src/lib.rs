@@ -172,36 +172,29 @@ pub fn majorana_rotate_step(
     // TODO: Should probably just track the phase of each term in the coefficient, as it stands is not
     // a great idea. Now we are implicitly tracking the phase, or assuming that the phase is fine.
 
-    // data[new_op_start_ix] = 1;
     if (term_op_weight & 2) != 0 {
         new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
-        // data[new_op_start_ix] *= 3;
     }
 
     if (rotation_op_weight & 2) != 0 {
         new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
-        // data[new_op_start_ix] *= 5;
     }
 
     data[new_op_start_ix] = 0;
     let mut prev_chunk_sum = 0;
-    let mut loop_counter: u32 = 0;
     for chunk_ix in 0..num_chunks_per_term as usize {
-        loop_counter = loop_counter.wrapping_add(100);
         let mut chunk_1 = rotation_op[chunk_ix];
         let chunk_2 = data[old_op_start_ix + chunk_ix];
         while chunk_1 > 0 {
             let lz = chunk_1.trailing_zeros();
             let filter = (1 << lz) - 1;
-
             let t = (filter & chunk_2).count_ones();
-
             data[new_op_start_ix] += prev_chunk_sum + t;
-
             chunk_1 ^= 1 << lz;
         }
         prev_chunk_sum += chunk_2.count_ones();
     }
+
     let cross_phase_tot = data[new_op_start_ix];
     let mut new_op_weight = 0;
     for ix in 0..num_chunks_per_term as usize {
@@ -211,12 +204,10 @@ pub fn majorana_rotate_step(
     }
     if (new_op_weight & 2) != 0 {
         new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
-        // data[new_op_start_ix] *= 7;
     }
 
     if cross_phase_tot % 2 == 1 {
         new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
-        // data[new_op_start_ix] *= 11;
     }
 
     data[new_coeff_ix] = new_coeff.0.to_bits();
