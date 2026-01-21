@@ -156,6 +156,9 @@ pub fn majorana_rotate_step(
         rotation_op_weight += rotation_op[ix].count_ones();
     }
     if (term_op_weight * rotation_op_weight + weight_of_product) % 2 == 0 {
+        for ix in start_ix..start_ix + 2 + num_chunks_per_term as usize {
+            data[ix] = 0;
+        }
         return;
     }
 
