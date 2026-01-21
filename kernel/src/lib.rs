@@ -147,15 +147,15 @@ pub fn majorana_rotate_step(
         }
         return;
     }
-    let mut weight_1 = 0;
-    let mut weight_2 = 0;
+    let mut term_op_weight = 0;
+    let mut rotation_op_weight = 0;
     let mut weight_of_product = 0;
     for ix in 0..num_chunks_per_term as usize {
         weight_of_product += (data[old_op_start_ix + ix] & rotation_op[ix]).count_ones();
-        weight_1 += data[old_op_start_ix + ix].count_ones();
-        weight_2 += rotation_op[ix].count_ones();
+        term_op_weight += data[old_op_start_ix + ix].count_ones();
+        rotation_op_weight += rotation_op[ix].count_ones();
     }
-    if (weight_1 * weight_2 + weight_of_product) % 2 == 0 {
+    if (term_op_weight * rotation_op_weight + weight_of_product) % 2 == 0 {
         return;
     }
 
@@ -168,49 +168,55 @@ pub fn majorana_rotate_step(
 
     let new_op_start_ix = start_ix + 4 + num_chunks_per_term as usize;
     let new_coeff_ix = start_ix + 2 + num_chunks_per_term as usize;
+
+    // TODO: Should probably just track the phase of each term in the coefficient, as it stands is not
+    // a great idea. Now we are implicitly tracking the phase, or assuming that the phase is fine.
+
+    // data[new_op_start_ix] = 1;
+    if (term_op_weight & 2) != 0 {
+        new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
+        // data[new_op_start_ix] *= 3;
+    }
+
+    if (rotation_op_weight & 2) != 0 {
+        new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
+        // data[new_op_start_ix] *= 5;
+    }
+
+    data[new_op_start_ix] = 0;
+    let mut prev_chunk_sum = 0;
+    let mut loop_counter: u32 = 0;
+    for chunk_ix in 0..num_chunks_per_term as usize {
+        loop_counter = loop_counter.wrapping_add(100);
+        let mut chunk_1 = rotation_op[chunk_ix];
+        let chunk_2 = data[old_op_start_ix + chunk_ix];
+        while chunk_1 > 0 {
+            let lz = chunk_1.trailing_zeros();
+            let filter = (1 << lz) - 1;
+
+            let t = (filter & chunk_2).count_ones();
+
+            data[new_op_start_ix] += prev_chunk_sum + t;
+
+            chunk_1 ^= 1 << lz;
+        }
+        prev_chunk_sum += chunk_2.count_ones();
+    }
+    let cross_phase_tot = data[new_op_start_ix];
     let mut new_op_weight = 0;
     for ix in 0..num_chunks_per_term as usize {
         let t = data[old_op_start_ix + ix] ^ rotation_op[ix];
         new_op_weight += t.count_ones();
         data[new_op_start_ix + ix] = t;
     }
-
-    // TODO: Should probably just track the phase of each term in the coefficient, as it stands is not
-    // a great idea. Now we are implicitly tracking the phase, or assuming that the phase is fine.
-
-    // We know the weights are greater than 0 because otherwise the operators would commute
-    // If the operator has a phase then we need to multiply the new coeff by it.
-    if (weight_1 * (weight_1 - 1) / 2) % 2 == 1 {
-        new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
-    }
-
-    if (weight_2 * (weight_2 - 1) / 2) % 2 == 1 {
-        new_coeff = (-1.0 * new_coeff.1, new_coeff.0);
-    }
-
-    if new_op_weight > 0 {
-        if (new_op_weight * (new_op_weight - 1) / 2) % 2 == 1 {
-            new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
-        }
-    }
-
-    // I think these are backwards
-    let mut cross_phase_tot = 0;
-    let mut prev_chunk_sum = 0;
-    for chunk_ix in 0..num_chunks_per_term as usize {
-        let mut chunk_1 = rotation_op[old_op_start_ix + chunk_ix];
-        while chunk_1 > 0 {
-            let lz = chunk_1.trailing_zeros();
-            let filter = (1 << lz) - 1;
-            let t = (filter & data[old_op_start_ix + chunk_ix]).count_ones();
-            cross_phase_tot += prev_chunk_sum + t;
-            chunk_1 ^= 1 << lz;
-        }
-        prev_chunk_sum += rotation_op[chunk_ix].count_ones();
+    if (new_op_weight & 2) != 0 {
+        new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
+        // data[new_op_start_ix] *= 7;
     }
 
     if cross_phase_tot % 2 == 1 {
         new_coeff = (new_coeff.1, -1.0 * new_coeff.0);
+        // data[new_op_start_ix] *= 11;
     }
 
     data[new_coeff_ix] = new_coeff.0.to_bits();
