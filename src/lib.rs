@@ -23,6 +23,81 @@ use shared::{
     BitonicParams, CommutationParams, MajoranaParams, Pass, SortOrder, SortableKey, Stage,
 };
 
+fn log_backend_info(
+    host: &str,
+    backend: Option<&str>,
+    adapter: Option<&str>,
+    driver: Option<&str>,
+) {
+    println!("  Host: {host}");
+
+    if let Some(b) = backend {
+        println!("  Backend: {b}");
+    }
+
+    if let Some(a) = adapter {
+        println!("  Adapter: {a}");
+    }
+
+    if let Some(d) = driver {
+        if !d.is_empty() {
+            println!("  Driver: {d}");
+        }
+    }
+}
+
+#[cfg(feature = "wgpu")]
+pub fn wgpu_rotate(
+    num_chunks_per_term: usize,
+    num_terms: usize,
+    data: &mut [u32],
+    rotation_angle: f32,
+    rotation_op: Vec<u32>,
+    coefficient_cutoff: f32,
+    num_unpaired_cutoff: u32,
+) {
+    if let Ok(runner) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
+        // Get and log backend info
+        let (host, backend, adapter, driver) = runner.backend_info();
+        log_backend_info(host, backend, adapter.as_deref(), driver.as_deref());
+
+        let len = data.len();
+
+        runner.rotate(
+            &mut data[..],
+            rotation_angle,
+            rotation_op,
+            num_terms,
+            num_chunks_per_term,
+            coefficient_cutoff,
+            num_unpaired_cutoff,
+        );
+    } else if let Err(e) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
+        eprintln!("  wgpu initialization failed: {e}");
+    }
+}
+
+pub fn rotate(
+    num_chunks_per_term: usize,
+    num_terms: usize,
+    data: &mut [u32],
+    rotation_angle: f32,
+    rotation_op: Vec<u32>,
+    coefficient_cutoff: f32,
+    num_unpaired_cutoff: u32,
+) {
+    #[cfg(feature = "wgpu")]
+    wgpu_rotate(
+        num_chunks_per_term,
+        num_terms,
+        data,
+        rotation_angle,
+        rotation_op,
+        coefficient_cutoff,
+        num_unpaired_cutoff,
+    );
+}
+
 /// Common trait for all sorting backends
 pub trait SortRunner {
     /// Get backend information for logging
@@ -131,11 +206,6 @@ pub trait MajoranaRunner {
     /// * `params` - Majorana sort parameters for this pass
     fn execute_kernel_pass(&self, data: &mut [u32], params: MajoranaParams) -> Result<()>;
 
-    /// Prepare data
-    fn prepare_data(&self, data: &[u32]) -> (Vec<u32>, usize) {
-        (data.to_vec(), data.len())
-    }
-
     /// Run majorana shit
     fn run_majorana(
         &self,
@@ -192,10 +262,10 @@ pub trait MajoranaRunner {
             return Ok(());
         }
 
-        let (mut gpu_data, original_size) = self.prepare_data(data);
+        let original_size = data.len();
         // self.pad_data(data, original_size);
         self.run_majorana(
-            &mut gpu_data,
+            data,
             rotation_angle,
             rotation_op,
             num_terms,
@@ -203,8 +273,6 @@ pub trait MajoranaRunner {
             coefficient_cutoff,
             unpaired_cutoff,
         )?;
-        gpu_data.truncate(original_size);
-        self.finalize_data(&gpu_data, data);
 
         Ok(())
     }

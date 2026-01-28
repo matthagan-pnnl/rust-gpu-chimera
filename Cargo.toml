@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 
 [features]
 default = []
-cuda = ["cuda_std", "cust", "cuda_builder", "shared/cuda", ]
+cuda = ["cuda_std", "cust", "cuda_builder", "shared/cuda"]
 vulkan = ["spirv-builder"]
 wgpu = ["dep:wgpu", "pollster", "futures", "spirv-builder"]
 ash = ["vulkan", "dep:ash", "ash-window", "winit", "raw-window-handle"]
@@ -23,7 +23,10 @@ rayon = "1.8"
 rand = "0.8"
 
 # Vulkan dependencies (wgpu)
-wgpu = { version = "26.0", features = ["spirv", "vulkan-portability"], optional = true }
+wgpu = { version = "26.0", features = [
+    "spirv",
+    "vulkan-portability",
+], optional = true }
 pollster = { version = "0.3", optional = true }
 futures = { version = "0.3", optional = true }
 
@@ -40,7 +43,9 @@ anyhow = "1.0"
 # CUDA dependencies (only on non-macOS platforms)
 [target.'cfg(not(target_os = "macos"))'.dependencies]
 cuda_std = { git = "https://github.com/Rust-GPU/Rust-CUDA", branch = "main", default-features = false, optional = true }
-cust = { git = "https://github.com/Rust-GPU/Rust-CUDA", branch = "main", default-features = false, features = ["glam"], optional = true }
+cust = { git = "https://github.com/Rust-GPU/Rust-CUDA", branch = "main", default-features = false, features = [
+    "glam",
+], optional = true }
 
 [build-dependencies]
 spirv-builder = { git = "https://github.com/rust-gpu/rust-gpu", branch = "main", optional = true }
@@ -52,7 +57,9 @@ cuda_builder = { git = "https://github.com/Rust-GPU/Rust-CUDA", branch = "main",
 members = ["kernel", "shared"]
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "allow", check-cfg = ['cfg(target_arch, values("spirv"))'] }
+unexpected_cfgs = { level = "allow", check-cfg = [
+    'cfg(target_arch, values("spirv"))',
+] }
 
 [patch.crates-io]
 num-traits = { git = "https://github.com/rust-num/num-traits", branch = "master" }

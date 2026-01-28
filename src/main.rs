@@ -174,43 +174,38 @@ fn main() -> Result<()> {
         }
     }
     let before = data.clone();
-    // println!("BEFORE.");
-    // let mut count = 0;
-    // for ix in 0..data.len() {
-    //     if count == 0 {
-    //         println!("re: {:}", f32::from_bits(data[ix]));
-    //     } else if count == 1 {
-    //         println!("im: {:}", f32::from_bits(data[ix]));
-    //     } else {
-    //         println!("data[{ix}] = {:}", data[ix]);
+    crate::rotate(
+        num_chunks_per_term,
+        num_terms,
+        &mut data,
+        rotation_angle,
+        rotation_op,
+        coefficient_cutoff,
+        unpaired_cutoff,
+    );
+
+    // #[cfg(feature = "wgpu")]
+    // {
+    //     if let Ok(runner) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
+    //         // Get and log backend info
+    //         let (host, backend, adapter, driver) = runner.backend_info();
+    //         log_backend_info(host, backend, adapter.as_deref(), driver.as_deref());
+
+    //         let len = data.len();
+
+    //         runner.rotate(
+    //             &mut data[..],
+    //             rotation_angle,
+    //             rotation_op,
+    //             num_terms,
+    //             num_chunks_per_term,
+    //             coefficient_cutoff,
+    //             unpaired_cutoff,
+    //         )?;
+    //     } else if let Err(e) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
+    //         eprintln!("  wgpu initialization failed: {e}");
     //     }
-    //     count += 1;
-    //     count %= 2 + num_chunks_per_term;
     // }
-    // println!("BEFORE.");
-
-    #[cfg(feature = "wgpu")]
-    {
-        if let Ok(runner) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
-            // Get and log backend info
-            let (host, backend, adapter, driver) = runner.backend_info();
-            log_backend_info(host, backend, adapter.as_deref(), driver.as_deref());
-
-            let len = data.len();
-
-            runner.rotate(
-                &mut data[..],
-                rotation_angle,
-                rotation_op,
-                num_terms,
-                num_chunks_per_term,
-                coefficient_cutoff,
-                unpaired_cutoff,
-            )?;
-        } else if let Err(e) = futures::executor::block_on(WgpuRunnerMajorana::new()) {
-            eprintln!("  wgpu initialization failed: {e}");
-        }
-    }
 
     for ix in 0..num_terms {
         println!("{:}", "-".repeat(99));
